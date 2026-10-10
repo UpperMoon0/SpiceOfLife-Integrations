@@ -1,0 +1,140 @@
+name: Build and GitHub Release
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Java 17 build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      tested_sha: ${{ steps.package.outputs.tested_sha }}
+      artifact_name: solintegrations-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Test GameTest completion checker
+        run: python3 -m unittest discover -s scripts/tests -v
+
+      - name: Build, test, and package
+        run: ./gradlew --no-daemon --stacktrace test build jarJar
+
+      - name: Verify reobfuscated package and record provenance
+        id: package
+        run: |
+          python3 scripts/release_package.py prepare --tested-sha "$GITHUB_SHA"
+          printf 'tested_sha=%s\n' "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Upload packaged jar and checksum
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: solintegrations-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ci-package/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: unit-test-reports-${{ github.sha }}
+          path: |
+            build/reports/tests/test/
+            build/test-results/test/
+          if-no-files-found: warn
+          retention-days: 14
+
+  gametest:
+    name: Headless GameTests (${{ matrix.profile }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - none
+          - withTfc
+          - withCore
+          - withBackpacks
+          - withTfc+withBackpacks
+    steps:
+      - name: Check out source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Registered tests include deliberate no-op cases for absent integrations.
+      # A pass proves only this profile's active coverage, never client or TFG coverage.
+      - name: Run profile and require actual GameTest completion
+        id: gametest
+        env:
+          GAMETEST_PROFILE: ${{ matrix.profile }}
+        run: bash scripts/run_gametest_profile.sh "$GAMETEST_PROFILE"
+
+      - name: Upload fresh invocation evidence and server diagnostics
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: gametest-${{ matrix.profile }}-${{ github.sha }}-${{ github.run_attempt }}
+          # Each fresh invocation directory also owns its server world/config/logs.
+          path: build/gametest-ci/
+          if-no-files-found: warn
+          retention-days: 14
+
+  release:
+    name: Publish tested GitHub release assets
+    needs: [build, gametest]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'UpperMoon0/SpiceOfLife-Integrations'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Check out the tested tag with main ancestry
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download this exact run's verified package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name "$ARTIFACT_NAME" --dir build/ci-package
+
+      - name: Verify provenance and publish without overwriting assets
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TESTED_SHA: ${{ needs.build.outputs.tested_sha }}
+        run: python3 scripts/release_publish.py --tested-sha "$TESTED_SHA"
