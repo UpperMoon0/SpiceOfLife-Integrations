@@ -20,6 +20,9 @@ build
 # other
 eclipse
 run
+run-gametest
+__pycache__/
+*.pyc
 
 # Files from Forge MDK
 forge*changelog.txt
