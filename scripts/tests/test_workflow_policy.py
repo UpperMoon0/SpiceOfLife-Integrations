@@ -20,9 +20,10 @@ class WorkflowPolicyTests(unittest.TestCase):
             self.assertIn('          - ' + profile + '\n', self.before_release)
 
     def test_legacy_combined_profile_is_also_required(self):
-        self.assertIn('            legacy: true', self.before_release)
+        self.assertIn('        dependencies: [current]', self.before_release)
+        self.assertIn('            dependencies: legacy', self.before_release)
         self.assertIn('-PtfcTestVersion=3.2.25 -PcoreTestFile=8705513 -PbackpacksTestFile=8687830', self.before_release)
-        self.assertIn("matrix.legacy && 'legacy' || 'current'", self.before_release)
+        self.assertIn("matrix.dependencies == 'legacy'", self.before_release)
 
     def test_only_requested_repository_tag_push_can_publish(self):
         self.assertIn("if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'UpperMoon0/SpiceOfLife-Integrations'", self.release)

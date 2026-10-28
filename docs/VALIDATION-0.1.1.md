@@ -26,3 +26,45 @@ Unit checks: 60 Java tests and 82 Python safety tests. Raw-jar contract probes a
 The full-pack stage copies the live pack files but creates a new disposable world, uses separate ports and a Linux network namespace, and excludes player identity registry data. It does not copy or modify the production world. The first harness attempt failed before mod loading because fixture/main Java packages overlapped; fixtures were moved to separate packages.
 
 Full-pack gameplay results and the final published artifact hash are recorded after execution. Interactive client UI, real-player reconnect behavior and extended TFG nutrient measurements remain separate validation boundaries.
+
+## Packaged full TFG result — 2026-10-28
+
+PASS: the isolated copy of the actual TFG 0.13.17-nstut.1 server stack with
+TFG Core 0.9.31 (bundled TFC 3.2.28), Core 1.5.16.2433 and Backpacks
+3.26.15.2228 completed all 23 registered tests, with 16 active combined-stack
+cases and zero failed required tests. This uses the separate reobfuscated
+fixture JAR and the unchanged installable addon JAR on a normal production
+Forge server. The harness returned:
+
+```json
+{"passed":true,"total":23,"done":23,"failedRequired":0}
+```
+
+Both optional API checks activated, and the transformed classes exported to
+`.mixin.out` contain the addon handlers. The installable addon is 680597 bytes,
+SHA-256 `3b2925cb0efbe22ce2dc1da88d359e1264150644112cfdfb7eb19b8bd0c62761`;
+the GitHub Actions build of b92452e produced identical bytes.
+
+Reproduction details: include the server's separate `modules/operations.jar`
+code module when copying this pack. Do not copy the production world or player
+identity registry. Run in a network namespace, with its loopback interface up.
+Production/AE2 structure lookup also needs a staging file
+`gameteststructures/empty.snbt`:
+
+```snbt
+{DataVersion:3465,size:[3,3,3],palette:[{Name:"minecraft:air"}],blocks:[],entities:[]}
+```
+
+Without that staging file the harness stopped before executing any test;
+that failed attempt is not gameplay evidence. The final passing log is
+`packaged-stage-4.log` in the execution workspace and the result is
+`packaged-stage/packaged-test-result.json`.
+
+A review of the first GitHub workflow run caught include-entry merging that
+replaced the current combined profile with the legacy entry. The corrected
+matrix uses an explicit dependency dimension so both run separately. Release
+requires the entire corrected matrix.
+
+No interactive client/UI, real-player reconnect/restart persistence or
+measured TFG extended-nutrient case is claimed by these checks. Production
+deployment remains a separate receipt.
