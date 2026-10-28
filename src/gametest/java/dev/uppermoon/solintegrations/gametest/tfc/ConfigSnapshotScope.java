@@ -1,4 +1,6 @@
-package dev.uppermoon.solintegrations.integration.tfc;
+package dev.uppermoon.solintegrations.gametest.tfc;
+
+import dev.uppermoon.solintegrations.integration.tfc.*;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;

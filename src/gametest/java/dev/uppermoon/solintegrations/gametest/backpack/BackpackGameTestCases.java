@@ -1,10 +1,12 @@
-package dev.uppermoon.solintegrations.integration.backpack;
+package dev.uppermoon.solintegrations.gametest.backpack;
+
+import dev.uppermoon.solintegrations.integration.backpack.*;
 
 import com.github.leopoko.solclassic.network.FoodHistoryHolder;
 import com.github.leopoko.solclassic.utils.FoodCalculator;
 import com.mojang.authlib.GameProfile;
 import dev.uppermoon.solintegrations.config.SolIntegrationsConfig;
-import dev.uppermoon.solintegrations.integration.tfc.ConfigSnapshotScope;
+import dev.uppermoon.solintegrations.gametest.tfc.ConfigSnapshotScope;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;

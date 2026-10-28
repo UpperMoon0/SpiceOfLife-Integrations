@@ -22,6 +22,9 @@ configurations {
     gameTestRuntimeOnly.extendsFrom runtimeOnly
     gameTestAnnotationProcessor.extendsFrom annotationProcessor
 }
+def tfcTestVersion = project.findProperty('tfcTestVersion') ?: '3.2.28'
+def coreTestFile = project.findProperty('coreTestFile') ?: '9323153'
+def backpacksTestFile = project.findProperty('backpacksTestFile') ?: '9323244'
 minecraft {
     mappings channel: 'official', version: minecraft_version
     runs {
@@ -55,8 +58,8 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     implementation fg.deobf('curse.maven:foodvariations-1109288:8832188')
     runtimeOnly fg.deobf('dev.architectury:architectury-forge:9.2.14')
-    compileOnly fg.deobf('maven.modrinth:terrafirmacraft:3.2.25')
-    compileOnly fg.deobf('curse.maven:sophisticated-core-618298:8705513')
+    compileOnly fg.deobf("maven.modrinth:terrafirmacraft:${tfcTestVersion}")
+    compileOnly fg.deobf("curse.maven:sophisticated-core-618298:${coreTestFile}")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.0'))
     implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.5.0')) {
@@ -66,13 +69,13 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     if (project.hasProperty('withCore') || project.hasProperty('withBackpacks')) {
-        runtimeOnly fg.deobf('curse.maven:sophisticated-core-618298:8705513')
+        runtimeOnly fg.deobf("curse.maven:sophisticated-core-618298:${coreTestFile}")
     }
     if (project.hasProperty('withBackpacks')) {
-        runtimeOnly fg.deobf('curse.maven:sophisticated-backpacks-422301:8687830')
+        runtimeOnly fg.deobf("curse.maven:sophisticated-backpacks-422301:${backpacksTestFile}")
     }
     if (project.hasProperty('withTfc')) {
-        runtimeOnly fg.deobf('maven.modrinth:terrafirmacraft:3.2.25')
+        runtimeOnly fg.deobf("maven.modrinth:terrafirmacraft:${tfcTestVersion}")
         runtimeOnly fg.deobf('maven.modrinth:patchouli:1.20.1-84.1-forge')
     }
 }
@@ -94,3 +97,24 @@ tasks.named('jar') { archiveClassifier = 'slim'; finalizedBy 'reobfJar' }
 tasks.named('jarJar') { finalizedBy 'reobfJarJar'; archiveClassifier = '' }
 
 tasks.named('build') { dependsOn 'jarJar' }
+
+
+// A separate, explicitly requested fixture mod for reobfuscated dedicated-server
+// validation. Never included in the installable addon or release package.
+sourceSets {
+    packagedTest {
+        java.srcDir 'src/packagedtest/java'
+        resources.srcDir 'src/packagedtest/resources'
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.gameTest.output
+    }
+}
+tasks.register('gameTestFixtureJar', Jar) {
+    dependsOn tasks.named('gameTestClasses'), tasks.named('packagedTestClasses')
+    from sourceSets.gameTest.output
+    from sourceSets.packagedTest.output
+    manifest.attributes.remove('MixinConfigs')
+    archiveClassifier = 'gametest-fixtures'
+    destinationDirectory = layout.buildDirectory.dir('gametest-fixtures')
+}
+reobf { gameTestFixtureJar {} }
+tasks.named('gameTestFixtureJar') { finalizedBy 'reobfGameTestFixtureJar' }

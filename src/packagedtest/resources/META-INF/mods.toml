@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="solintegrationstests"
+version="1"
+displayName="Spice of Life integration test fixtures"
+[[dependencies.solintegrationstests]]
+modId="solintegrations"
+mandatory=true
+versionRange="[0.1.1]"
+ordering="AFTER"
+side="SERVER"

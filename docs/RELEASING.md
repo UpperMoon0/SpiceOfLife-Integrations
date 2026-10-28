@@ -21,7 +21,7 @@ These are release instructions, not steps performed during implementation. Tags 
 
 ## Required gates and exact artifact
 
-The release job waits for the build, Python safety tests, JUnit tests, and **all five** headless GameTest profiles to succeed. The GameTest completion verifier remains mandatory; Gradle exit zero alone is insufficient.
+The release job waits for the build, Python safety tests, JUnit tests, and **all six** headless GameTest matrix entries (five current profiles and the legacy combined profile) to succeed. The GameTest completion verifier remains mandatory; Gradle exit zero alone is insufficient.
 
 The build prepares only the installable reobfuscated Jar-in-Jar output, `solintegrations-<version>.jar`. Packaging checks reject a wrong version, missing resources/refmap, missing MixinExtras, test fixtures, upstream implementations, or an inappropriate slim/development artifact.
 

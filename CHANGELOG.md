@@ -2,6 +2,12 @@
 
 This file tracks Spice of Life Integrations, independently of upstream Forge and mod release histories.
 
+## 0.1.1
+
+- Replace exact TFC/Sophisticated Core version gates with optional-mod API and injection-target inspection. Compatible versions no longer silently disable native TFC hunger restoration or backpack ordering.
+- Log the exact missing/changed API when compatibility checks fail.
+- Test current TFC 3.2.28 and Sophisticated Core 1.5.16.2433/Backpacks 3.26.15.2228 by default; retain configurable legacy test dependencies.
+
 ## 0.1.0 — Unreleased
 
 ### Added
