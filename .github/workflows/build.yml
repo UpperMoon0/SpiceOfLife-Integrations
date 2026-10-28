@@ -66,19 +66,23 @@ jobs:
           retention-days: 14
 
   gametest:
-    name: Headless GameTests (${{ matrix.profile }})
+    name: Headless GameTests (${{ matrix.profile }}, ${{ matrix.dependencies }})
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        dependencies: [current]
         profile:
           - none
           - withTfc
           - withCore
           - withBackpacks
           - withTfc+withBackpacks
+        include:
+          - profile: withTfc+withBackpacks
+            dependencies: legacy
     steps:
       - name: Check out source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -97,13 +101,19 @@ jobs:
         id: gametest
         env:
           GAMETEST_PROFILE: ${{ matrix.profile }}
-        run: bash scripts/run_gametest_profile.sh "$GAMETEST_PROFILE"
+          LEGACY_DEPENDENCIES: ${{ matrix.dependencies == 'legacy' }}
+        run: |
+          if [ "$LEGACY_DEPENDENCIES" = true ]; then
+            bash scripts/run_gametest_profile.sh "$GAMETEST_PROFILE" -PtfcTestVersion=3.2.25 -PcoreTestFile=8705513 -PbackpacksTestFile=8687830
+          else
+            bash scripts/run_gametest_profile.sh "$GAMETEST_PROFILE"
+          fi
 
       - name: Upload fresh invocation evidence and server diagnostics
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: gametest-${{ matrix.profile }}-${{ github.sha }}-${{ github.run_attempt }}
+          name: gametest-${{ matrix.profile }}-${{ matrix.dependencies }}-${{ github.sha }}-${{ github.run_attempt }}
           # Each fresh invocation directory also owns its server world/config/logs.
           path: build/gametest-ci/
           if-no-files-found: warn

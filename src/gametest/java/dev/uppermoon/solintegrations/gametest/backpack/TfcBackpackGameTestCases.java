@@ -1,4 +1,6 @@
-package dev.uppermoon.solintegrations.integration.backpack;
+package dev.uppermoon.solintegrations.gametest.backpack;
+
+import dev.uppermoon.solintegrations.integration.backpack.*;
 
 import com.github.leopoko.solclassic.config.SolclassicConfigData;
 import com.github.leopoko.solclassic.network.FoodHistoryHolder;

@@ -38,12 +38,12 @@ These are implementation targets, **not a claim that the runtime matrix has pass
 | Minecraft | 1.20.1 | Required |
 | Forge | 47.4.13 | Build target; metadata accepts 47.4.13 through 47.x |
 | Spice of Life Classic (`solclassic`) | 2.13 | Required, exact version |
-| TerraFirmaCraft (`tfc`) | 3.2.25 | Optional native-food integration |
-| Sophisticated Core (`sophisticatedcore`) | 1.3.84.2308 | Optional feeding integration |
+| TerraFirmaCraft (`tfc`) | 3.2.25 and 3.2.28 | Optional native-food integration; API checked |
+| Sophisticated Core (`sophisticatedcore`) | 1.3.84.2308 and 1.5.16.2433 | Optional feeding integration; API checked |
 | Sophisticated Backpacks | 3.24.67.2109 | Target backpack runtime |
 | TFG Core | 0.9.23 | Target extended-nutrient runtime, with its full required stack |
 
-The mixin plugin enables TFC and Sophisticated Core integrations only for the target versions above (including versions prefixed with `1.20.1-`). Missing optional mods leave their integrations inactive. Other optional-mod versions are skipped; that is not a compatibility guarantee for an unsupported pack. TFG and Backpacks are runtime test targets rather than separate version gates in the plugin.
+Optional TFC and Sophisticated Core integrations have no version ceiling. Before enabling them, the mixin plugin reads their class files without loading optional classes and checks the API signatures and exact injection-call counts the addon requires. Changed or missing targets disable the affected integration with a specific error. Missing optional mods leave their integrations inactive. Classic remains pinned to 2.13. Structural checks cannot establish future gameplay semantics; the versions above are runtime test targets, and future updates still need gameplay validation. TFG and Backpacks are runtime targets rather than separate version gates.
 
 ## Configuration
 
@@ -76,11 +76,11 @@ Use JDK 17 and the checked-in Gradle wrapper. Dependency resolution requires acc
 
 On Windows, use `gradlew.bat --no-daemon test build jarJar`.
 
-The intended installable output is the reobfuscated **Jar-in-Jar** artifact under `build/libs/`, containing the addon and its bundled MixinExtras dependency. For version 0.1.0 its name is `solintegrations-0.1.0.jar`; the `-slim.jar` is an intermediate output without the bundled dependency. Use the packaged jar. The CI workflow checks for `META-INF/jarjar/metadata.json` before collecting that artifact. Confirm the exact filename and checksum from the successful build.
+The intended installable output is the reobfuscated **Jar-in-Jar** artifact under `build/libs/`, containing the addon and its bundled MixinExtras dependency. For version 0.1.1 its name is `solintegrations-0.1.1.jar`; the `-slim.jar` is an intermediate output without the bundled dependency. Use the packaged jar. The CI workflow checks for `META-INF/jarjar/metadata.json` before collecting that artifact. Confirm the exact filename and checksum from the successful build.
 
 Test reports, when generated, are at `build/reports/tests/test/index.html` and `build/test-results/test/`. Pure unit tests cover restoration arithmetic, restoration-scope isolation, and depletion ordering; they do not start Minecraft.
 
-[Build CI](.github/workflows/build.yml) runs on pushes, pull requests, and manual dispatch with JDK 17. It retains test reports, successful packaged build artifacts, and five headless GameTest profiles with explicit completion checks. Matching `v<mod_version>` tags on commits reachable from `main` can publish the tested JAR, checksums, and provenance to GitHub Releases after all checks pass. Pull requests and ordinary pushes cannot publish. See [release instructions](docs/RELEASING.md). CurseForge publishing and server deployment are not configured.
+[Build CI](.github/workflows/build.yml) runs on pushes, pull requests, and manual dispatch with JDK 17. It retains test reports, successful packaged build artifacts, and five current-dependency headless GameTest profiles plus the legacy combined profile with explicit completion checks. Matching `v<mod_version>` tags on commits reachable from `main` can publish the tested JAR, checksums, and provenance to GitHub Releases after all checks pass. Pull requests and ordinary pushes cannot publish. See [release instructions](docs/RELEASING.md). CurseForge publishing and server deployment are not configured.
 
 ## Test installation
 

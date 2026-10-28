@@ -1,4 +1,6 @@
-package dev.uppermoon.solintegrations.integration.tfc;
+package dev.uppermoon.solintegrations.gametest.tfc;
+
+import dev.uppermoon.solintegrations.integration.tfc.*;
 
 import com.github.leopoko.solclassic.config.SolclassicConfigData;
 import com.github.leopoko.solclassic.forge.config.SolClassicConfigForge;

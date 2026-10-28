@@ -3,7 +3,8 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-profile="${1:?Usage: bash scripts/run_gametest_profile.sh PROFILE}"
+profile="${1:?Usage: bash scripts/run_gametest_profile.sh PROFILE [GRADLE_ARGS...]}"
+shift
 case "$profile" in
   none) profile_args=() ;;
   withTfc) profile_args=(-PwithTfc) ;;
@@ -31,7 +32,7 @@ printf 'SOLINTEGRATIONS_GAMETEST_BEGIN run_id=%s profile=%s\n' "$run_id" "$profi
 # Forge can exit 0 after a startup crash. Both pipefail and explicit log proof matter.
 set +e
 ./gradlew --no-daemon --console=plain --stacktrace runGameTestServer -x downloadAssets \
-  "-PgameTestRunDir=$server_dir" "${profile_args[@]}" 2>&1 | tee -a "$log"
+  "-PgameTestRunDir=$server_dir" "${profile_args[@]}" "$@" 2>&1 | tee -a "$log"
 pipeline_status=("${PIPESTATUS[@]}")
 set -e
 printf 'SOLINTEGRATIONS_GAMETEST_END run_id=%s profile=%s exit_code=%s tee_exit_code=%s\n' \

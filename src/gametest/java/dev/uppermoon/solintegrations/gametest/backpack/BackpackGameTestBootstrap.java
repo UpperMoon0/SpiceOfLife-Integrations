@@ -1,4 +1,6 @@
-package dev.uppermoon.solintegrations.integration.backpack;
+package dev.uppermoon.solintegrations.gametest.backpack;
+
+import dev.uppermoon.solintegrations.integration.backpack.*;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.mojang.logging.LogUtils;
