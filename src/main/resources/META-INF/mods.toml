@@ -22,7 +22,7 @@ side="BOTH"
 [[dependencies.${mod_id}]]
 modId="solclassic"
 mandatory=true
-versionRange="[2.13]"
+versionRange="[2.13,)"
 ordering="AFTER"
 side="BOTH"
 [[dependencies.${mod_id}]]
