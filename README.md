@@ -37,13 +37,13 @@ These are implementation targets, **not a claim that the runtime matrix has pass
 | Java | 17 | Build and run |
 | Minecraft | 1.20.1 | Required |
 | Forge | 47.4.13 | Build target; metadata accepts 47.4.13 through 47.x |
-| Spice of Life Classic (`solclassic`) | 2.13 | Required, exact version |
+| Spice of Life Classic (`solclassic`) | 2.13+ | Required minimum; 2.13 is the tested baseline |
 | TerraFirmaCraft (`tfc`) | 3.2.25 and 3.2.28 | Optional native-food integration; API checked |
 | Sophisticated Core (`sophisticatedcore`) | 1.3.84.2308 and 1.5.16.2433 | Optional feeding integration; API checked |
 | Sophisticated Backpacks | 3.24.67.2109 | Target backpack runtime |
 | TFG Core | 0.9.23 | Target extended-nutrient runtime, with its full required stack |
 
-Optional TFC and Sophisticated Core integrations have no version ceiling. Before enabling them, the mixin plugin reads their class files without loading optional classes and checks the API signatures and exact injection-call counts the addon requires. Changed or missing targets disable the affected integration with a specific error. Missing optional mods leave their integrations inactive. Classic remains pinned to 2.13. Structural checks cannot establish future gameplay semantics; the versions above are runtime test targets, and future updates still need gameplay validation. TFG and Backpacks are runtime targets rather than separate version gates.
+Optional TFC and Sophisticated Core integrations have no version ceiling. Before enabling them, the mixin plugin reads their class files without loading optional classes and checks the API signatures and exact injection-call counts the addon requires. Changed or missing targets disable the affected integration with a specific error. Missing optional mods leave their integrations inactive. Classic requires at least 2.13 with no arbitrary loader ceiling. Before any optional integration mixins apply, the addon inspects Classic's own bytecode for the signatures and exact invocation sites its mixins require; incompatible upgrades disable the integrations with diagnostics instead of applying broken mixins. This is an API safety gate, not certification of future gameplay semantics: the tested Classic baseline is still 2.13 and newer releases require gameplay validation. TFG and Backpacks are runtime targets rather than separate version gates.
 
 ## Configuration
 
