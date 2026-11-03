@@ -61,8 +61,6 @@ public final class IntegrationContract {
         } catch (IllegalArgumentException ex) { return ex.getMessage(); }
     }
 
-    private static final String LIVING = "Lnet/minecraft/world/entity/LivingEntity;";
-
     public static String tfc(Function<String, ClassNode> classes) {
         try {
             ClassNode data = required(classes, FOOD + "TFCFoodData");
