@@ -18,19 +18,26 @@ pipeline {
                         script {
                             if (env.CHANGE_ID || env.BRANCH_NAME != 'main') { error('Reviewed main only') }
                             checkout scm
-                        }
+                            env.CI_SPICE_POLICY_TMP = pwd(tmp: true) + '/spice-policy-tmp'
+                            sh 'mkdir -p "$CI_SPICE_POLICY_TMP"'
+                            withEnv(['TMPDIR=' + env.CI_SPICE_POLICY_TMP]) {
                         sh '''#!/usr/bin/env bash
 set -euo pipefail
 mkdir -p ci-evidence/policy
 python3 -m unittest discover -s scripts/tests -v 2>&1 | tee ci-evidence/policy/contracts.log
 git rev-parse HEAD > ci-evidence/policy/source-sha.txt
 '''
+                            }
+                        }
                     }
                     post {
                         always {
                             script {
                                 try { archiveArtifacts artifacts: 'ci-evidence/policy/**', allowEmptyArchive: true }
-                                finally { cleanWs(deleteDirs: true, disableDeferredWipeout: true) }
+                                finally {
+                                    try { if (env.CI_SPICE_POLICY_TMP) { dir(env.CI_SPICE_POLICY_TMP) { deleteDir() } } }
+                                    finally { cleanWs(deleteDirs: true, disableDeferredWipeout: true) }
+                                }
                             }
                         }
                     }
