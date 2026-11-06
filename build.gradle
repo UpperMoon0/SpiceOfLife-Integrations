@@ -10,8 +10,8 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 sourceSets {
     gameTest {
-        java.srcDir 'src/gametest/java'
-        resources.srcDir 'src/gametest/resources'
+        java.setSrcDirs(['src/gametest/java'])
+        resources.setSrcDirs(['src/gametest/resources'])
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
     }
@@ -103,8 +103,8 @@ tasks.named('build') { dependsOn 'jarJar' }
 // validation. Never included in the installable addon or release package.
 sourceSets {
     packagedTest {
-        java.srcDir 'src/packagedtest/java'
-        resources.srcDir 'src/packagedtest/resources'
+        java.setSrcDirs(['src/packagedtest/java'])
+        resources.setSrcDirs(['src/packagedtest/resources'])
         compileClasspath += sourceSets.main.compileClasspath + sourceSets.gameTest.output
     }
 }
