@@ -1,3 +1,5 @@
+@Library('nstut-ci') _
+
 pipeline {
     agent none
     options {
@@ -39,11 +41,7 @@ git rev-parse HEAD > ci-evidence/policy/source-sha.txt
                     steps {
                         script {
                             if (env.CHANGE_ID || env.BRANCH_NAME != 'main') { error('Reviewed main only') }
-                            powershell '''$ErrorActionPreference = 'Stop'
-$free = [math]::Floor((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1024)
-$required = if ($env:NODE_NAME -eq 'on-prem-1-windows-ci') { 4096 } else { 2048 }
-if ($free -lt $required) { throw "Insufficient RAM for native CI ($free MiB available; require $required MiB)" }
-'''
+                            nstutNativeAdmission()
                             checkout scm
                             env.CI_SPICE_CACHE = pwd(tmp: true) + '/spice-gradle-cache'
                             withEnv(['GRADLE_USER_HOME=' + env.CI_SPICE_CACHE]) {
