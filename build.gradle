@@ -118,3 +118,13 @@ tasks.register('gameTestFixtureJar', Jar) {
 }
 reobf { gameTestFixtureJar {} }
 tasks.named('gameTestFixtureJar') { finalizedBy 'reobfGameTestFixtureJar' }
+
+// CI-only source and workflow-policy verification. Ordinary builds/releases
+// are unchanged; this task runs only when explicitly requested by Jenkins.
+tasks.register('ciContracts', Exec) {
+    group = 'verification'
+    description = 'Validate GameTest evidence checks and release policy contracts'
+    workingDir project.projectDir
+    def python = System.getProperty('os.name').toLowerCase(java.util.Locale.ROOT).contains('windows') ? 'python' : 'python3'
+    commandLine python, '-m', 'unittest', 'discover', '-s', 'scripts/tests', '-v'
+}
