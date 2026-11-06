@@ -26,8 +26,10 @@ git rev-parse HEAD > ci-evidence/policy/source-sha.txt
                     }
                     post {
                         always {
-                            archiveArtifacts artifacts: 'ci-evidence/policy/**', allowEmptyArchive: true
-                            cleanWs(deleteDirs: true, disableDeferredWipeout: true)
+                            script {
+                                try { archiveArtifacts artifacts: 'ci-evidence/policy/**', allowEmptyArchive: true }
+                                finally { cleanWs(deleteDirs: true, disableDeferredWipeout: true) }
+                            }
                         }
                     }
                 }
