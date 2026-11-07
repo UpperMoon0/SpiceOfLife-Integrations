@@ -22,6 +22,23 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
             LoggerFactory.getLogger("solintegrations").info("Integration inactive (required mod absent or unsupported Classic): {}", mixin);
             return false;
         }
+        // Run this once per mod load, before applying ANY mixin that expects
+        // Classic's internals. A new version must satisfy the actual ABI and
+        // injection-call contract, not merely a numeric version range.
+        if (!failures.containsKey("solclassic")) {
+            String failure;
+            try {
+                failure = IntegrationContract.classic(name -> read("solclassic", name));
+            } catch (RuntimeException ex) {
+                failure = "cannot inspect bytecode: " + ex.getMessage();
+            }
+            failures.put("solclassic", failure);
+            if (failure == null) LoggerFactory.getLogger("solintegrations").info(
+                    "Classic integration API compatible: solclassic {}", version("solclassic"));
+            else LoggerFactory.getLogger("solintegrations").error(
+                    "Classic integration disabled: solclassic {}: {}", version("solclassic"), failure);
+        }
+        if (failures.get("solclassic") != null) return false;
         for (String id : SupportedVersions.optionalMods(mixin)) {
             if (!failures.containsKey(id)) {
                 String failure;

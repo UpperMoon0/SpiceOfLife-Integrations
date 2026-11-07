@@ -22,7 +22,10 @@ public final class SupportedVersions {
         };
     }
     public static boolean allows(String mixin, Function<String, String> versions) {
-        if (!matches(versions.apply("solclassic"), "2.13")) return false;
+        // Loader metadata enforces the 2.13 minimum; runtime bytecode guards
+        // inspect Classic itself rather than rejecting all future version labels.
+        String classicVersion = versions.apply("solclassic");
+        if (classicVersion == null || classicVersion.isBlank()) return false;
         List<String> optional = optionalMods(mixin);
         return !optional.isEmpty() && optional.stream().allMatch(id -> {
             String version = versions.apply(id);

@@ -54,6 +54,57 @@ class IntegrationContractTest {
         MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | (isStatic ? Opcodes.ACC_STATIC : 0), name, desc, null, null);
         node.methods.add(method); return method;
     }
+    private Map<String, ClassNode> classic() {
+        Map<String, ClassNode> classes = new HashMap<>();
+        String root = "com/github/leopoko/solclassic/";
+        add(node(classes, root + "utils/FoodCalculator"), "CalculateNutrition", "(IF)I", true);
+        ClassNode events = node(classes, root + "forge/network/FoodEventHandlerForge");
+        add(events, "getEffectiveNutrition", "(" + S + P + ")I", false);
+        add(events, "getEffectiveSaturationModifier", "(" + S + P + ")F", false);
+        node(classes, root + "network/FoodHistoryHolder");
+        node(classes, root + "utils/BasketBlacklist");
+        ClassNode basket = node(classes, root + "item/WickerBasketItem");
+        MethodNode select = add(basket, "getMostNutritiousFood", "(" + S + P + ")" + S, true);
+        select.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                root + "utils/BasketBlacklist", "isBlacklisted", "(" + S + ")Z", false));
+        select.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                "net/minecraft/world/item/ItemStack", "of",
+                "(Lnet/minecraft/nbt/CompoundTag;)" + S, false));
+        add(basket, "shrinkItemFromInventory", "(" + S + S + ")V", true);
+        MethodNode finish = add(basket, "finishUsingItem",
+                "(" + S + "Lnet/minecraft/world/level/Level;" + L + ")" + S, false);
+        finish.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                "net/minecraft/world/item/ItemStack", "finishUsingItem",
+                "(Lnet/minecraft/world/level/Level;" + L + ")" + S, false));
+        return classes;
+    }
+    @Test void acceptsClassicWithOriginalBytecodeContract() {
+        assertNull(IntegrationContract.classic(classic()::get));
+    }
+    @Test void rejectsClassicMissingNutritionApi() {
+        var classes = classic();
+        classes.get("com/github/leopoko/solclassic/utils/FoodCalculator").methods.clear();
+        assertTrue(IntegrationContract.classic(classes::get).contains("CalculateNutrition"));
+    }
+    @Test void rejectsClassicChangedFoodHistoryApi() {
+        var classes = classic();
+        classes.remove("com/github/leopoko/solclassic/network/FoodHistoryHolder");
+        assertTrue(IntegrationContract.classic(classes::get).contains("FoodHistoryHolder"));
+    }
+    @Test void rejectsClassicChangedBasketBlacklistCallSite() {
+        var classes = classic();
+        classes.get("com/github/leopoko/solclassic/item/WickerBasketItem")
+                .methods.get(0).instructions.remove(
+                        classes.get("com/github/leopoko/solclassic/item/WickerBasketItem")
+                                .methods.get(0).instructions.getFirst());
+        assertTrue(IntegrationContract.classic(classes::get).contains("BasketBlacklist"));
+    }
+    @Test void rejectsClassicChangedDelegatedConsumption() {
+        var classes = classic();
+        classes.get("com/github/leopoko/solclassic/item/WickerBasketItem")
+                .methods.get(2).instructions.clear();
+        assertTrue(IntegrationContract.classic(classes::get).contains("delegate"));
+    }
     @Test void acceptsDevelopmentTfc() { assertNull(IntegrationContract.tfc(tfc("eat")::get)); }
     @Test void acceptsPackagedTfc() { assertNull(IntegrationContract.tfc(tfc("m_38707_")::get)); }
     @Test void missingOptionalClassExplainsFailure() { assertTrue(IntegrationContract.tfc(Map.<String, ClassNode>of()::get).contains("missing class")); }

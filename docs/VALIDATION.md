@@ -56,7 +56,7 @@ Verify the packaged jar in `build/libs/`:
 
 1. It is produced by `jarJar` and reobfuscated, rather than being a development or intermediate jar.
 2. It contains `META-INF/mods.toml`, `solintegrations.mixins.json`, the generated refmap, addon classes, and `META-INF/jarjar/metadata.json` with a bundled MixinExtras jar.
-3. Mod metadata has the expected addon version, `solintegrations` mod ID, MIT license, and required Classic version.
+3. Mod metadata has the expected addon version, `solintegrations` mod ID, MIT license, and a minimum-only Classic `[2.13,)` requirement. Optional-integration mixins must also verify the actual Classic bytecode contract before applying.
 4. No Classic, TFC, TFG, Sophisticated Core, or Backpacks implementation is accidentally bundled into the addon.
 5. Record the final artifact filename and SHA-256. Compare upstream jar checksums again after staging installation.
 
@@ -75,7 +75,7 @@ Every addon row includes Forge, Classic 2.13, and the addon. Supply each optiona
 | S4 | S3 + TFG Core 0.9.23 and its complete required stack | Pack boots with its normal scripts/datapacks; extended food and nutrient tests run |
 | S5 | Exact supported mods, addon integrations disabled | Each switch disables its behavior without breaking startup; compare against upstream behavior |
 | S6 | Core present without Backpacks, if allowed by that dependency set | No assumed Backpacks class dependency; no crash merely from loading Core |
-| S7 | One optional mod at a different, dependency-compatible version | Verify the relevant addon integration is skipped; do not treat this as support for that version |
+| S7 | One optional mod at a different, dependency-compatible version | Verify its structural API contract: compatible versions may activate the integration, incompatible versions must be skipped safely. Do not infer gameplay certification from a pass. |
 
 For S5, test both switches off, then each off independently. For each row inspect server and client logs for missing classes, failed injections, refmap problems, mixin target mismatches, and repeated runtime exceptions. A successful single-player launch is not a substitute for these dedicated-server rows.
 

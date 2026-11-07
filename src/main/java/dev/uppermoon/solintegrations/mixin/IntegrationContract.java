@@ -21,6 +21,46 @@ public final class IntegrationContract {
     private static final String LIVING = "Lnet/minecraft/world/entity/LivingEntity;";
     private IntegrationContract() {}
 
+    private static final String CLASSIC = "com/github/leopoko/solclassic/";
+    private static final String NBT = "Lnet/minecraft/nbt/CompoundTag;";
+    private static final String LEVEL = "Lnet/minecraft/world/level/Level;";
+
+    /**
+     * Verify Classic's API and the exact call sites targeted by our required
+     * Mixin injections before allowing any Classic version through. A future
+     * version with changed signatures or delegation is not automatically safe
+     * simply because its numeric version satisfies the loader minimum.
+     */
+    public static String classic(Function<String, ClassNode> classes) {
+        try {
+            ClassNode calculator = required(classes, CLASSIC + "utils/FoodCalculator");
+            method(calculator, "CalculateNutrition", "(IF)I", true);
+
+            ClassNode foodEvents = required(classes, CLASSIC + "forge/network/FoodEventHandlerForge");
+            method(foodEvents, "getEffectiveNutrition", "(" + STACK + PLAYER + ")I", false);
+            method(foodEvents, "getEffectiveSaturationModifier", "(" + STACK + PLAYER + ")F", false);
+            required(classes, CLASSIC + "network/FoodHistoryHolder");
+            required(classes, CLASSIC + "utils/BasketBlacklist");
+
+            ClassNode basket = required(classes, CLASSIC + "item/WickerBasketItem");
+            MethodNode select = method(basket, "getMostNutritiousFood",
+                    "(" + STACK + PLAYER + ")" + STACK, true);
+            String blacklist = CLASSIC + "utils/BasketBlacklist";
+            if (calls(select, blacklist, List.of("isBlacklisted"), "(" + STACK + ")Z") != 1)
+                return "Classic basket selection must invoke BasketBlacklist.isBlacklisted exactly once";
+            if (calls(select, "net/minecraft/world/item/ItemStack", List.of("of"),
+                    "(" + NBT + ")" + STACK) != 1)
+                return "Classic basket selection must decode exactly one persisted food ItemStack";
+            method(basket, "shrinkItemFromInventory", "(" + STACK + STACK + ")V", true);
+            MethodNode finish = method(basket, "finishUsingItem",
+                    "(" + STACK + LEVEL + LIVING + ")" + STACK, false);
+            if (calls(finish, "net/minecraft/world/item/ItemStack", List.of("finishUsingItem"),
+                    "(" + LEVEL + LIVING + ")" + STACK) != 1)
+                return "Classic basket must delegate food consumption exactly once";
+            return null;
+        } catch (IllegalArgumentException ex) { return ex.getMessage(); }
+    }
+
     public static String tfc(Function<String, ClassNode> classes) {
         try {
             ClassNode data = required(classes, FOOD + "TFCFoodData");
